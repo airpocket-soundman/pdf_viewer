@@ -15,17 +15,13 @@ const ZOOM_STEP = 0.2;
 const state = {
   tabs: [],
   activeTabId: null,
-  installPrompt: null,
   intersectionObserver: null,
 };
 
 const elements = {
   fileInput: document.querySelector("#file-input"),
-  installButton: document.querySelector("#install-button"),
   tabStrip: document.querySelector("#tab-strip"),
-  emptyState: document.querySelector("#empty-state"),
   viewerPanel: document.querySelector("#viewer-panel"),
-  viewerMeta: document.querySelector("#viewer-meta"),
   pageStack: document.querySelector("#page-stack"),
   pageIndicator: document.querySelector("#page-indicator"),
   zoomIndicator: document.querySelector("#zoom-indicator"),
@@ -68,23 +64,6 @@ function bindEvents() {
   elements.zoomOut.addEventListener("click", () => adjustZoom(-ZOOM_STEP));
   elements.fitWidth.addEventListener("click", fitWidth);
   elements.pageStack.addEventListener("scroll", handleViewerScroll, { passive: true });
-
-  window.addEventListener("beforeinstallprompt", (event) => {
-    event.preventDefault();
-    state.installPrompt = event;
-    elements.installButton.hidden = false;
-  });
-
-  elements.installButton.addEventListener("click", async () => {
-    if (!state.installPrompt) {
-      return;
-    }
-
-    await state.installPrompt.prompt();
-    await state.installPrompt.userChoice;
-    state.installPrompt = null;
-    elements.installButton.hidden = true;
-  });
 }
 
 async function addFilesAsTabs(files) {
@@ -174,19 +153,14 @@ async function renderActiveTab() {
 
   if (!activeTab) {
     disconnectObserver();
-    elements.emptyState.hidden = false;
-    elements.viewerPanel.hidden = true;
-    elements.viewerMeta.textContent = "";
     elements.pageStack.innerHTML = "";
+    elements.pageStack.classList.add("is-empty");
     updateToolbar(null);
     return;
   }
 
-  elements.emptyState.hidden = true;
-  elements.viewerPanel.hidden = false;
-  elements.viewerMeta.textContent = `${activeTab.name} • ${formatBytes(activeTab.size)} • ${activeTab.pageCount} pages`;
+  elements.pageStack.classList.remove("is-empty");
   updateToolbar(activeTab);
-
   elements.pageStack.innerHTML = "";
   activeTab.renderedPages = new Set();
 
@@ -309,7 +283,7 @@ async function fitWidth() {
 
   const firstPage = await activeTab.pdfDoc.getPage(1);
   const viewport = firstPage.getViewport({ scale: 1 });
-  const containerWidth = Math.max(elements.pageStack.clientWidth - 28, 280);
+  const containerWidth = Math.max(elements.pageStack.clientWidth - 20, 280);
   activeTab.zoom = clamp(containerWidth / viewport.width, MIN_ZOOM, MAX_ZOOM);
   await rerenderActiveTab();
 }
@@ -337,7 +311,7 @@ function handleViewerScroll() {
 
   elements.pageStack.querySelectorAll(".page-shell").forEach((node) => {
     const rect = node.getBoundingClientRect();
-    const distance = Math.abs(rect.top - 140);
+    const distance = Math.abs(rect.top - 84);
     if (distance < smallestDistance) {
       smallestDistance = distance;
       closestPage = Number(node.dataset.pageNumber);
@@ -491,25 +465,7 @@ async function registerServiceWorker() {
 }
 
 function showGlobalError(message) {
-  elements.emptyState.hidden = false;
-  elements.viewerPanel.hidden = true;
-  elements.emptyState.innerHTML = `
-    <div class="empty-card">
-      <p class="eyebrow">Error</p>
-      <h1>Viewer unavailable</h1>
-      <p>${message}</p>
-    </div>
-  `;
-}
-
-function formatBytes(bytes) {
-  if (!bytes) {
-    return "0 B";
-  }
-
-  const units = ["B", "KB", "MB", "GB"];
-  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  return `${(bytes / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
+  elements.pageStack.innerHTML = `<div class="error-note">${message}</div>`;
 }
 
 function clamp(value, min, max) {
