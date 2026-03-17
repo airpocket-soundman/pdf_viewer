@@ -1,0 +1,20 @@
+{
+  "name": "PDF Viewer PWA",
+  "short_name": "PDF Viewer",
+  "description": "Android 向けのタブ対応 PWA PDF Viewer",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101418",
+  "theme_color": "#101418",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

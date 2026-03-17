@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101418" />
+    <meta name="description" content="Android 向けの PWA PDF Viewer。複数の PDF をタブで同時に扱えます。" />
+    <title>PDF Viewer PWA</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./assets/icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">PV</span>
+          <div class="brand-copy">
+            <strong>PDF Viewer</strong>
+            <span>PWA for Android</span>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button id="install-button" class="ghost-button" type="button" hidden>Install</button>
+          <label class="primary-button" for="file-input">Open PDF</label>
+          <input id="file-input" type="file" accept="application/pdf" multiple hidden />
+        </div>
+      </header>
+
+      <section id="tab-strip" class="tab-strip" aria-label="Open PDF tabs"></section>
+
+      <section class="toolbar" aria-label="Viewer toolbar">
+        <div class="toolbar-group">
+          <button id="prev-page" class="toolbar-button" type="button" title="Previous page">Prev</button>
+          <button id="next-page" class="toolbar-button" type="button" title="Next page">Next</button>
+          <span id="page-indicator" class="toolbar-pill">0 / 0</span>
+        </div>
+        <div class="toolbar-group">
+          <button id="zoom-out" class="toolbar-button" type="button" title="Zoom out">-</button>
+          <button id="fit-width" class="toolbar-button" type="button" title="Fit width">Fit</button>
+          <button id="zoom-in" class="toolbar-button" type="button" title="Zoom in">+</button>
+          <span id="zoom-indicator" class="toolbar-pill">100%</span>
+        </div>
+      </section>
+
+      <main id="viewer-stage" class="viewer-stage">
+        <section id="empty-state" class="empty-state">
+          <div class="empty-card">
+            <p class="eyebrow">Fullscreen-first PWA</p>
+            <h1>複数の PDF をタブで管理</h1>
+            <p>
+              Android で開くことを前提にしたシンプルな PDF Viewer です。上の
+              <strong>Open PDF</strong> から複数ファイルを選択すると、タブで同時に扱えます。
+            </p>
+          </div>
+        </section>
+
+        <section id="viewer-panel" class="viewer-panel" hidden>
+          <div id="viewer-meta" class="viewer-meta"></div>
+          <div id="page-stack" class="page-stack" aria-live="polite"></div>
+        </section>
+      </main>
+    </div>
+
+    <template id="tab-template">
+      <article class="tab" role="tab">
+        <button class="tab-activate" type="button"></button>
+        <button class="tab-close" type="button" aria-label="Close tab">×</button>
+      </article>
+    </template>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
