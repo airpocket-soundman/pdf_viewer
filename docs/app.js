@@ -43,6 +43,7 @@ async function boot() {
   await restoreSession();
   renderTabs();
   await renderActiveTab();
+  updateViewerMaxHeight();
   await registerServiceWorker();
 }
 
@@ -58,12 +59,33 @@ function bindEvents() {
     await addFilesAsTabs(files);
   });
 
-  elements.prevPage.addEventListener("click", () => stepPage(-1));
-  elements.nextPage.addEventListener("click", () => stepPage(1));
-  elements.zoomIn.addEventListener("click", () => adjustZoom(ZOOM_STEP));
-  elements.zoomOut.addEventListener("click", () => adjustZoom(-ZOOM_STEP));
-  elements.fitWidth.addEventListener("click", fitWidth);
+  bindToolbarAction(elements.prevPage, () => stepPage(-1));
+  bindToolbarAction(elements.nextPage, () => stepPage(1));
+  bindToolbarAction(elements.zoomIn, () => adjustZoom(ZOOM_STEP));
+  bindToolbarAction(elements.zoomOut, () => adjustZoom(-ZOOM_STEP));
+  bindToolbarAction(elements.fitWidth, fitWidth);
   elements.pageStack.addEventListener("scroll", handleViewerScroll, { passive: true });
+  window.addEventListener("resize", handleViewportResize, { passive: true });
+}
+
+function bindToolbarAction(button, action) {
+  button.addEventListener("click", async (event) => {
+    event.preventDefault();
+    await action();
+    button.blur();
+  });
+}
+
+function handleViewportResize() {
+  updateViewerMaxHeight();
+}
+
+function updateViewerMaxHeight() {
+  const rect = elements.viewerPanel.getBoundingClientRect();
+  const viewportHeight = window.innerHeight;
+  const bottomGap = Math.max(6, parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.5 || 6);
+  const maxHeight = Math.max(180, Math.floor(viewportHeight - rect.top - bottomGap));
+  elements.pageStack.style.maxHeight = `${maxHeight}px`;
 }
 
 async function addFilesAsTabs(files) {
@@ -83,6 +105,7 @@ async function addFilesAsTabs(files) {
     };
 
     await hydratePdf(tab);
+    tab.zoom = await getFitZoom(tab);
     state.tabs.push(tab);
     state.activeTabId = tab.id;
   }
@@ -116,10 +139,12 @@ function renderTabs() {
       await persistSession();
       renderTabs();
       await renderActiveTab();
+      activateButton.blur();
     });
 
     closeButton.addEventListener("click", async () => {
       await closeTab(tab.id);
+      closeButton.blur();
     });
 
     elements.tabStrip.append(fragment);
@@ -156,6 +181,7 @@ async function renderActiveTab() {
     elements.pageStack.innerHTML = "";
     elements.pageStack.classList.add("is-empty");
     updateToolbar(null);
+    updateViewerMaxHeight();
     return;
   }
 
@@ -170,9 +196,10 @@ async function renderActiveTab() {
   }
   elements.pageStack.append(fragment);
 
+  updateViewerMaxHeight();
   setupObserver(activeTab);
   await renderVisiblePages(activeTab);
-  requestAnimationFrame(() => scrollToPage(activeTab.currentPage, false));
+  requestAnimationFrame(() => setViewerPosition({ pageNumber: activeTab.currentPage, offsetWithinPage: 0 }, false));
 }
 
 function createPageShell(pageNumber) {
@@ -273,8 +300,9 @@ async function adjustZoom(delta) {
     return;
   }
 
+  const anchor = getViewerPosition(activeTab.currentPage);
   activeTab.zoom = clamp(activeTab.zoom + delta, MIN_ZOOM, MAX_ZOOM);
-  await rerenderActiveTab();
+  await rerenderActiveTab(anchor);
 }
 
 async function fitWidth() {
@@ -283,23 +311,52 @@ async function fitWidth() {
     return;
   }
 
-  const firstPage = await activeTab.pdfDoc.getPage(1);
-  const viewport = firstPage.getViewport({ scale: 1 });
-  const containerWidth = Math.max(elements.pageStack.clientWidth - 16, 280);
-  activeTab.zoom = clamp(containerWidth / viewport.width, MIN_ZOOM, MAX_ZOOM);
-  await rerenderActiveTab();
+  const anchor = getViewerPosition(activeTab.currentPage);
+  activeTab.zoom = await getFitZoom(activeTab);
+  await rerenderActiveTab(anchor);
 }
 
-async function rerenderActiveTab() {
+async function getFitZoom(tab) {
+  const firstPage = await tab.pdfDoc.getPage(1);
+  const viewport = firstPage.getViewport({ scale: 1 });
+  const containerWidth = Math.max(elements.pageStack.clientWidth - 16, 280);
+  return clamp(containerWidth / viewport.width, MIN_ZOOM, MAX_ZOOM);
+}
+
+async function rerenderActiveTab(anchor = null) {
   const activeTab = getActiveTab();
   if (!activeTab) {
     return;
   }
 
-  const currentPage = activeTab.currentPage;
   await persistSession();
   await renderActiveTab();
-  scrollToPage(currentPage, false);
+  setViewerPosition(anchor ?? { pageNumber: activeTab.currentPage, offsetWithinPage: 0 }, false);
+}
+
+function getViewerPosition(pageNumber) {
+  const target = elements.pageStack.querySelector(`[data-page-number="${pageNumber}"]`);
+  if (!target) {
+    return { pageNumber, offsetWithinPage: 0 };
+  }
+
+  return {
+    pageNumber,
+    offsetWithinPage: Math.max(0, elements.pageStack.scrollTop - target.offsetTop),
+  };
+}
+
+function setViewerPosition(position, smooth) {
+  const target = elements.pageStack.querySelector(`[data-page-number="${position.pageNumber}"]`);
+  if (!target) {
+    return;
+  }
+
+  const top = Math.max(0, target.offsetTop + (position.offsetWithinPage ?? 0));
+  elements.pageStack.scrollTo({
+    top,
+    behavior: smooth ? "smooth" : "auto",
+  });
 }
 
 function handleViewerScroll() {
@@ -310,10 +367,11 @@ function handleViewerScroll() {
 
   let closestPage = activeTab.currentPage;
   let smallestDistance = Number.POSITIVE_INFINITY;
+  const stackTop = elements.pageStack.getBoundingClientRect().top;
 
   elements.pageStack.querySelectorAll(".page-shell").forEach((node) => {
     const rect = node.getBoundingClientRect();
-    const distance = Math.abs(rect.top - 84);
+    const distance = Math.abs(rect.top - stackTop - 8);
     if (distance < smallestDistance) {
       smallestDistance = distance;
       closestPage = Number(node.dataset.pageNumber);
@@ -337,19 +395,7 @@ function stepPage(delta) {
   activeTab.currentPage = targetPage;
   updateToolbar(activeTab);
   persistSession();
-  scrollToPage(targetPage, true);
-}
-
-function scrollToPage(pageNumber, smooth) {
-  const target = elements.pageStack.querySelector(`[data-page-number="${pageNumber}"]`);
-  if (!target) {
-    return;
-  }
-
-  target.scrollIntoView({
-    behavior: smooth ? "smooth" : "auto",
-    block: "start",
-  });
+  setViewerPosition({ pageNumber: targetPage, offsetWithinPage: 0 }, true);
 }
 
 function updateToolbar(activeTab) {
@@ -473,7 +519,3 @@ function showGlobalError(message) {
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
-
-
-
-
