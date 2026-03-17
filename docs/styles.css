@@ -7,6 +7,9 @@
   --accent: #4ec3ff;
   --page: #ffffff;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  --safe-top: max(6px, env(safe-area-inset-top));
+  --tabbar-height: 36px;
+  --toolbar-height: 34px;
 }
 
 * {
@@ -42,17 +45,17 @@ button {
 
 .app-shell {
   display: grid;
-  grid-template-rows: auto auto auto;
+  grid-template-rows: var(--tabbar-height) var(--toolbar-height) auto;
   width: 100%;
   max-width: 100vw;
   min-width: 0;
   min-height: 100dvh;
   padding:
-    max(6px, env(safe-area-inset-top))
+    var(--safe-top)
     6px
     max(6px, env(safe-area-inset-bottom))
     6px;
-  gap: 4px;
+  gap: 2px;
   overflow: visible;
 }
 
@@ -60,7 +63,7 @@ button {
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
   min-width: 0;
   backdrop-filter: blur(16px);
@@ -71,19 +74,20 @@ button {
 
 .tabbar {
   position: sticky;
-  top: max(6px, env(safe-area-inset-top));
+  top: var(--safe-top);
   z-index: 20;
-  min-width: 0;
-  padding: 6px 6px 0;
-  border-radius: 14px 14px 0 0;
+  height: var(--tabbar-height);
+  padding: 2px 4px 0;
+  border-radius: 10px 10px 0 0;
 }
 
 .tab-strip {
   flex: 1 1 auto;
   display: flex;
   align-items: flex-end;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
+  height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
@@ -94,10 +98,10 @@ button {
   display: inline-flex;
   align-items: center;
   min-width: 0;
-  min-height: 34px;
+  height: calc(var(--tabbar-height) - 3px);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-bottom: 0;
-  border-radius: 10px 10px 0 0;
+  border-radius: 8px 8px 0 0;
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -118,26 +122,27 @@ button {
 
 .tab-activate {
   max-width: 140px;
-  min-height: 34px;
-  padding: 0 10px;
+  height: 100%;
+  padding: 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   line-height: 1;
 }
 
 .tab-close {
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
+  margin-right: 2px;
   padding: 0;
   color: var(--muted);
 }
 
 .tab-close svg,
 .tab-action svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -147,9 +152,9 @@ button {
 
 .tab-action {
   flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px 10px 0 0;
+  width: 30px;
+  height: calc(var(--tabbar-height) - 3px);
+  border-radius: 8px 8px 0 0;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom: 0;
   background: rgba(255, 255, 255, 0.07);
@@ -158,32 +163,34 @@ button {
 
 .toolbar {
   position: sticky;
-  top: calc(max(6px, env(safe-area-inset-top)) + 40px);
+  top: calc(var(--safe-top) + var(--tabbar-height) - 1px);
   z-index: 19;
+  height: var(--toolbar-height);
   justify-content: space-between;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: 4px;
+  padding: 2px 6px;
   border-top: 0;
-  border-radius: 0 0 14px 14px;
-  flex-wrap: wrap;
+  border-radius: 0 0 10px 10px;
+  flex-wrap: nowrap;
 }
 
 .toolbar-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  min-width: 0;
 }
 
 .toolbar-button,
 .toolbar-pill {
-  min-height: 30px;
-  padding: 0 10px;
+  height: 24px;
+  padding: 0 8px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
 }
 
 .toolbar-button {
@@ -279,7 +286,8 @@ button {
     max-width: 104px;
   }
 
-  .toolbar-group > * {
-    flex: 0 0 auto;
+  .toolbar-button,
+  .toolbar-pill {
+    padding: 0 6px;
   }
 }
