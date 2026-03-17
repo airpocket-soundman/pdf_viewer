@@ -285,7 +285,7 @@ async function fitWidth() {
 
   const firstPage = await activeTab.pdfDoc.getPage(1);
   const viewport = firstPage.getViewport({ scale: 1 });
-  const containerWidth = Math.max(elements.pageStack.clientWidth - 20, 280);
+  const containerWidth = Math.max(elements.pageStack.clientWidth - 16, 280);
   activeTab.zoom = clamp(containerWidth / viewport.width, MIN_ZOOM, MAX_ZOOM);
   await rerenderActiveTab();
 }
@@ -473,5 +473,6 @@ function showGlobalError(message) {
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
+
 
 
