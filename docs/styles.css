@@ -206,11 +206,12 @@ button {
   display: flex;
   justify-content: center;
   margin: 0 auto 10px;
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
 }
 
 .page-card {
-  width: min(100%, calc(var(--page-width, 100%) + 24px));
+  width: calc(var(--page-width, 100%) + 16px);
   padding: 8px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.05);
@@ -228,8 +229,9 @@ button {
 
 .page-canvas {
   display: block;
-  width: 100%;
+  width: auto;
   height: auto;
+  max-width: none;
   background: var(--page);
 }
 
@@ -262,3 +264,5 @@ button {
     flex: 0 0 auto;
   }
 }
+
+

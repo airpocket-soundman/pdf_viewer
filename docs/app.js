@@ -247,6 +247,8 @@ async function renderSinglePage(tab, pageNumber) {
     canvas.className = "page-canvas";
     canvas.width = Math.ceil(viewport.width);
     canvas.height = Math.ceil(viewport.height);
+    canvas.style.width = `${displayViewport.width}px`;
+    canvas.style.height = `${displayViewport.height}px`;
     canvas.style.aspectRatio = `${displayViewport.width} / ${displayViewport.height}`;
 
     const context = canvas.getContext("2d", { alpha: false });
@@ -471,3 +473,5 @@ function showGlobalError(message) {
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
+
+
