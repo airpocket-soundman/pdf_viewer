@@ -40,6 +40,7 @@ GitHub Pages で公開する、Android 向けの PWA ベース PDF Viewer を実
 - 現在ページ番号と総ページ数を表示する
 - 前後ページ移動を提供する
 - ズームイン、ズームアウト、幅合わせを提供する
+- 必要に応じて 20% まで縮小でき、Fit で画面幅に収まる倍率まで下げられる
 
 ### 4. 状態保持
 
@@ -86,3 +87,5 @@ GitHub Pages で公開する、Android 向けの PWA ベース PDF Viewer を実
 - `docs/sw.js`
 - `docs/assets/` 配下の静的アセット
 - この仕様書 `README.md`
+
+

@@ -8,7 +8,7 @@ const DB_VERSION = 1;
 const STORE_NAME = "session";
 const SESSION_KEY = "open-tabs";
 const DEFAULT_ZOOM = 1;
-const MIN_ZOOM = 0.6;
+const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 2.6;
 const ZOOM_STEP = 0.2;
 
@@ -473,6 +473,7 @@ function showGlobalError(message) {
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
+
 
 
 
